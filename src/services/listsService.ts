@@ -65,4 +65,14 @@ export const listsService = {
     const response = await api.put<List>(`/lists/${listId}/items/reorder`, { itemIds });
     return response.data;
   },
+
+  async archiveList(listId: string, archived: boolean): Promise<List> {
+    const response = await api.put<List>(`/lists/${listId}/archive`, { archived });
+    return response.data;
+  },
+
+  async pinList(listId: string, pinned: boolean): Promise<List> {
+    const response = await api.put<List>(`/lists/${listId}/pin`, { pinned });
+    return response.data;
+  },
 };

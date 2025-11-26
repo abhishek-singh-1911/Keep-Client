@@ -15,6 +15,8 @@ export interface List {
   owner: string;
   collaborators: string[];
   items: ListItem[];
+  archived: boolean;
+  pinned: boolean;
   createdAt: string;
   updatedAt: string;
 }

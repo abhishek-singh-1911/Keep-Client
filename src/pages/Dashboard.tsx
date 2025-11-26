@@ -30,6 +30,11 @@ export default function Dashboard() {
     fetchLists();
   }, [dispatch]);
 
+  // Filter out archived lists and separate pinned from unpinned
+  const activeLists = lists.filter(list => !list.archived);
+  const pinnedLists = activeLists.filter(list => list.pinned);
+  const unpinnedLists = activeLists.filter(list => !list.pinned);
+
   return (
     <MainLayout>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
@@ -39,7 +44,7 @@ export default function Dashboard() {
           <CircularProgress sx={{ mt: 4 }} />
         ) : (
           <Box sx={{ width: '100%', maxWidth: 1200, mt: 4 }}>
-            {lists.length === 0 ? (
+            {activeLists.length === 0 ? (
               <Box sx={{ textAlign: 'center', mt: 8, opacity: 0.5 }}>
                 <span className="material-icons-outlined" style={{ fontSize: 120, color: '#e0e0e0' }}>lightbulb</span>
                 <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
@@ -48,23 +53,39 @@ export default function Dashboard() {
               </Box>
             ) : (
               <>
-                <Typography variant="overline" sx={{ ml: 1, mb: 1, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
-                  PINNED
-                </Typography>
-                <MasonryGrid>
-                  {lists.map((list) => (
-                    <NoteCard
-                      key={list.listId}
-                      list={list}
-                      onClick={() => console.log('Clicked note:', list.listId)}
-                    />
-                  ))}
-                </MasonryGrid>
+                {pinnedLists.length > 0 && (
+                  <>
+                    <Typography variant="overline" sx={{ ml: 1, mb: 1, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
+                      PINNED
+                    </Typography>
+                    <MasonryGrid>
+                      {pinnedLists.map((list) => (
+                        <NoteCard
+                          key={list.listId}
+                          list={list}
+                          onClick={() => console.log('Clicked note:', list.listId)}
+                        />
+                      ))}
+                    </MasonryGrid>
+                  </>
+                )}
 
-                <Typography variant="overline" sx={{ ml: 1, mb: 1, mt: 4, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
-                  OTHERS
-                </Typography>
-                {/* We can split lists into pinned/others later */}
+                {unpinnedLists.length > 0 && (
+                  <>
+                    <Typography variant="overline" sx={{ ml: 1, mb: 1, mt: pinnedLists.length > 0 ? 4 : 0, display: 'block', color: 'text.secondary', fontWeight: 500 }}>
+                      OTHERS
+                    </Typography>
+                    <MasonryGrid>
+                      {unpinnedLists.map((list) => (
+                        <NoteCard
+                          key={list.listId}
+                          list={list}
+                          onClick={() => console.log('Clicked note:', list.listId)}
+                        />
+                      ))}
+                    </MasonryGrid>
+                  </>
+                )}
               </>
             )}
           </Box>

@@ -10,13 +10,15 @@ import {
 } from '@mui/material';
 import {
   PushPinOutlined as PinIcon,
-  PaletteOutlined as PaletteIcon,
-  ImageOutlined as ImageIcon,
+  PushPin as PinFilledIcon,
   ArchiveOutlined as ArchiveIcon,
-  MoreVertOutlined as MoreIcon,
+  DeleteOutline as DeleteIcon,
   PersonAddOutlined as CollaboratorIcon,
 } from '@mui/icons-material';
 import type { List } from '../../store/slices/listsSlice';
+import { useAppDispatch } from '../../hooks/useRedux';
+import { updateList, deleteList as removeList } from '../../store/slices/listsSlice';
+import { listsService } from '../../services/listsService';
 
 interface NoteCardProps {
   list: List;
@@ -50,11 +52,11 @@ const NoteActions = styled(Box)(() => ({
   marginTop: 'auto',
 }));
 
-const PinButton = styled(IconButton)(() => ({
+const PinButton = styled(IconButton)<{ ispinned?: string }>(({ ispinned }) => ({
   position: 'absolute',
   top: 8,
   right: 8,
-  opacity: 0,
+  opacity: ispinned === 'true' ? 1 : 0,
   transition: 'opacity 0.2s',
   padding: 8,
 }));
@@ -64,14 +66,53 @@ const NoteContent = styled(Box)(() => ({
 }));
 
 export default function NoteCard({ list, onClick }: NoteCardProps) {
+  const dispatch = useAppDispatch();
+
   // Take only first 8 items for preview
   const previewItems = list.items.slice(0, 8);
   const remainingCount = list.items.length - 8;
 
+  const handlePin = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const updatedList = await listsService.pinList(list.listId, !list.pinned);
+      dispatch(updateList(updatedList));
+    } catch (error) {
+      console.error('Failed to pin list:', error);
+    }
+  };
+
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const updatedList = await listsService.archiveList(list.listId, !list.archived);
+      dispatch(updateList(updatedList));
+    } catch (error) {
+      console.error('Failed to archive list:', error);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this list?')) {
+      try {
+        await listsService.deleteList(list.listId);
+        dispatch(removeList(list.listId));
+      } catch (error) {
+        console.error('Failed to delete list:', error);
+      }
+    }
+  };
+
   return (
     <StyledCard onClick={onClick}>
-      <PinButton className="pin-button" size="small">
-        <PinIcon />
+      <PinButton
+        className="pin-button"
+        size="small"
+        onClick={handlePin}
+        ispinned={list.pinned ? 'true' : 'false'}
+      >
+        {list.pinned ? <PinFilledIcon /> : <PinIcon />}
       </PinButton>
 
       <CardContent sx={{ pb: 0, pt: 2, px: 2, cursor: 'pointer' }}>
@@ -115,34 +156,19 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
 
       <NoteActions className="note-actions">
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Remind me">
-            <IconButton size="small">
-              <span className="material-icons-outlined" style={{ fontSize: 18 }}>notifications_none</span>
-            </IconButton>
-          </Tooltip>
           <Tooltip title="Collaborator">
             <IconButton size="small">
               <CollaboratorIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Background options">
-            <IconButton size="small">
-              <PaletteIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Add image">
-            <IconButton size="small">
-              <ImageIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Archive">
-            <IconButton size="small">
+          <Tooltip title={list.archived ? "Unarchive" : "Archive"}>
+            <IconButton size="small" onClick={handleArchive}>
               <ArchiveIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="More">
-            <IconButton size="small">
-              <MoreIcon sx={{ fontSize: 18 }} />
+          <Tooltip title="Delete">
+            <IconButton size="small" onClick={handleDelete}>
+              <DeleteIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
         </Box>

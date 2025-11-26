@@ -13,13 +13,10 @@ import {
 } from '@mui/material';
 import {
   CheckBoxOutlined as CheckBoxIcon,
-  BrushOutlined as BrushIcon,
-  ImageOutlined as ImageIcon,
   PushPinOutlined as PinIcon,
-  PaletteOutlined as PaletteIcon,
   PersonAddOutlined as CollaboratorIcon,
   ArchiveOutlined as ArchiveIcon,
-  MoreVertOutlined as MoreIcon,
+  DeleteOutline as DeleteIcon,
   UndoOutlined as UndoIcon,
   RedoOutlined as RedoIcon,
   Add as AddIcon,
@@ -157,12 +154,6 @@ export default function NoteInput() {
               <Tooltip title="New List">
                 <ActionButton size="small"><CheckBoxIcon /></ActionButton>
               </Tooltip>
-              <Tooltip title="New Note with Drawing">
-                <ActionButton size="small"><BrushIcon /></ActionButton>
-              </Tooltip>
-              <Tooltip title="New Note with Image">
-                <ActionButton size="small"><ImageIcon /></ActionButton>
-              </Tooltip>
             </Box>
           </Box>
         ) : (
@@ -232,25 +223,14 @@ export default function NoteInput() {
               mt: 1
             }}>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="Remind me">
-                  <ActionButton size="small">
-                    <span className="material-icons-outlined" style={{ fontSize: 20 }}>notifications_none</span>
-                  </ActionButton>
-                </Tooltip>
                 <Tooltip title="Collaborator">
                   <ActionButton size="small"><CollaboratorIcon /></ActionButton>
-                </Tooltip>
-                <Tooltip title="Background options">
-                  <ActionButton size="small"><PaletteIcon /></ActionButton>
-                </Tooltip>
-                <Tooltip title="Add image">
-                  <ActionButton size="small"><ImageIcon /></ActionButton>
                 </Tooltip>
                 <Tooltip title="Archive">
                   <ActionButton size="small"><ArchiveIcon /></ActionButton>
                 </Tooltip>
-                <Tooltip title="More">
-                  <ActionButton size="small"><MoreIcon /></ActionButton>
+                <Tooltip title="Delete">
+                  <ActionButton size="small"><DeleteIcon /></ActionButton>
                 </Tooltip>
                 <Tooltip title="Undo">
                   <span>

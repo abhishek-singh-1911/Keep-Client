@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ListView from './pages/ListView';
+import Archive from './pages/Archive';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -83,6 +84,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ListView />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/archive"
+        element={
+          <ProtectedRoute>
+            <Archive />
           </ProtectedRoute>
         }
       />

@@ -10,10 +10,7 @@ import {
 } from '@mui/material';
 import {
   LightbulbOutlined as NotesIcon,
-  NotificationsNoneOutlined as RemindersIcon,
-  EditOutlined as EditIcon,
   ArchiveOutlined as ArchiveIcon,
-  DeleteOutline as TrashIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
@@ -96,10 +93,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { text: 'Notes', icon: <NotesIcon />, path: '/dashboard' },
-    { text: 'Reminders', icon: <RemindersIcon />, path: '/reminders' },
-    { text: 'Edit labels', icon: <EditIcon />, path: '/labels' },
     { text: 'Archive', icon: <ArchiveIcon />, path: '/archive' },
-    { text: 'Trash', icon: <TrashIcon />, path: '/trash' },
   ];
 
   return (

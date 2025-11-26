@@ -17,7 +17,6 @@ import {
   Search as SearchIcon,
   ViewStream as ViewStreamIcon,
   GridView as GridViewIcon,
-  Settings as SettingsIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -173,12 +172,6 @@ export default function AppBar() {
           <Tooltip title={viewMode === 'grid' ? 'List view' : 'Grid view'}>
             <IconButton color="inherit" onClick={toggleView}>
               {viewMode === 'grid' ? <ViewStreamIcon /> : <GridViewIcon />}
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Settings">
-            <IconButton color="inherit">
-              <SettingsIcon />
             </IconButton>
           </Tooltip>
 
