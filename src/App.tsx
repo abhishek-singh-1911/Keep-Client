@@ -35,7 +35,20 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { initiateSocketConnection, disconnectSocket } from './services/socketService';
+import { useEffect } from 'react';
+
 function AppRoutes() {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      initiateSocketConnection();
+    } else {
+      disconnectSocket();
+    }
+  }, [isAuthenticated]);
+
   return (
     <Routes>
       {/* Public Routes */}

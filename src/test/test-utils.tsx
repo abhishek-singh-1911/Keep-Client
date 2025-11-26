@@ -26,7 +26,7 @@ export function renderWithProviders(
         auth: authReducer,
         lists: listsReducer,
         ui: uiReducer,
-      },
+      } as any,
       preloadedState,
     }),
     ...renderOptions
