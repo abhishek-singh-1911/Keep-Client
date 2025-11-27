@@ -38,9 +38,23 @@ const GridItem = styled(Box)(({ }) => ({
   marginBottom: '16px',
 }));
 
+import { useAppSelector } from '../../hooks/useRedux';
+
 export default function MasonryGrid({ children }: MasonryGridProps) {
+  const { viewMode } = useAppSelector((state) => state.ui);
+
   return (
-    <GridContainer>
+    <GridContainer
+      sx={
+        viewMode === 'list'
+          ? {
+            columnCount: '1 !important',
+            maxWidth: '600px',
+            margin: '0 auto',
+          }
+          : {}
+      }
+    >
       {React.Children.map(children, (child) => (
         <GridItem>{child}</GridItem>
       ))}
