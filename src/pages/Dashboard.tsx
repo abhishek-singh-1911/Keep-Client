@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import {
   DndContext,
@@ -24,6 +24,11 @@ import { SortableNoteCard } from '../components/notes/SortableNoteCard';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { setLists, setLoading, setError, type List } from '../store/slices/listsSlice';
 import { listsService } from '../services/listsService';
+import {
+  subscribeToCollaboratorAdded,
+  subscribeToCollaboratorRemoved,
+  subscribeToPermissionChanged,
+} from '../services/socketService';
 
 export default function Dashboard() {
   const dispatch = useAppDispatch();
@@ -52,23 +57,44 @@ export default function Dashboard() {
     setIsDialogOpen(false);
   };
 
-  useEffect(() => {
-    const fetchLists = async () => {
-      dispatch(setLoading(true));
-      try {
-        // Fetch all lists from the backend
-        const data = await listsService.getAllLists();
-        dispatch(setLists(data));
-        dispatch(setLoading(false));
-      } catch (error) {
-        console.error('Failed to fetch lists:', error);
-        dispatch(setError('Failed to load notes'));
-        dispatch(setLoading(false));
-      }
-    };
-
-    fetchLists();
+  // Memoize the fetchLists function so it can be used in multiple places
+  const fetchLists = useCallback(async () => {
+    dispatch(setLoading(true));
+    try {
+      // Fetch all lists from the backend
+      const data = await listsService.getAllLists();
+      dispatch(setLists(data));
+      dispatch(setLoading(false));
+    } catch (error) {
+      console.error('Failed to fetch lists:', error);
+      dispatch(setError('Failed to load notes'));
+      dispatch(setLoading(false));
+    }
   }, [dispatch]);
+
+  // Initial fetch of lists
+  useEffect(() => {
+    fetchLists();
+  }, [fetchLists]);
+
+  // Subscribe to real-time collaboration events
+  useEffect(() => {
+    // Set up socket event listeners for collaboration changes
+    subscribeToCollaboratorAdded((data) => {
+      console.log('Collaborator added, refetching lists...', data);
+      fetchLists();
+    });
+
+    subscribeToCollaboratorRemoved((data) => {
+      console.log('Collaborator removed, refetching lists...', data);
+      fetchLists();
+    });
+
+    subscribeToPermissionChanged((data) => {
+      console.log('Permission changed, refetching lists...', data);
+      fetchLists();
+    });
+  }, [fetchLists]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -128,8 +154,31 @@ export default function Dashboard() {
 
   // Filter out archived lists and separate pinned from unpinned
   const activeLists = lists.filter(list => !list.archived);
-  const pinnedLists = activeLists.filter(list => list.pinned);
-  const unpinnedLists = activeLists.filter(list => !list.pinned);
+
+  // Get search query from UI state
+  const { searchQuery } = useAppSelector((state) => state.ui);
+
+  // Filter lists based on search query
+  const filterLists = (listArray: typeof activeLists) => {
+    if (!searchQuery.trim()) return listArray;
+
+    const query = searchQuery.toLowerCase();
+    return listArray.filter(list => {
+      // Search in list name
+      if (list.name.toLowerCase().includes(query)) return true;
+
+      // Search in list items text
+      const hasMatchingItem = list.items.some(item =>
+        item.text.toLowerCase().includes(query)
+      );
+
+      return hasMatchingItem;
+    });
+  };
+
+  const filteredActiveLists = filterLists(activeLists);
+  const pinnedLists = filteredActiveLists.filter(list => list.pinned);
+  const unpinnedLists = filteredActiveLists.filter(list => !list.pinned);
 
   return (
     <MainLayout>
@@ -145,6 +194,13 @@ export default function Dashboard() {
                 <span className="material-icons-outlined" style={{ fontSize: 120, color: '#e0e0e0' }}>lightbulb</span>
                 <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
                   Notes you add appear here
+                </Typography>
+              </Box>
+            ) : filteredActiveLists.length === 0 ? (
+              <Box sx={{ textAlign: 'center', mt: 8, opacity: 0.5 }}>
+                <span className="material-icons-outlined" style={{ fontSize: 120, color: '#e0e0e0' }}>search_off</span>
+                <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
+                  No notes match "{searchQuery}"
                 </Typography>
               </Box>
             ) : (
