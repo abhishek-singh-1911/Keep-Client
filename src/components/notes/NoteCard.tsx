@@ -106,14 +106,16 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
 
   return (
     <StyledCard onClick={onClick}>
-      <PinButton
-        className="pin-button"
-        size="small"
-        onClick={handlePin}
-        ispinned={list.pinned ? 'true' : 'false'}
-      >
-        {list.pinned ? <PinFilledIcon /> : <PinIcon />}
-      </PinButton>
+      {!list.archived && (
+        <PinButton
+          className="pin-button"
+          size="small"
+          onClick={handlePin}
+          ispinned={list.pinned ? 'true' : 'false'}
+        >
+          {list.pinned ? <PinFilledIcon /> : <PinIcon />}
+        </PinButton>
+      )}
 
       <CardContent sx={{ pb: 0, pt: 2, px: 2, cursor: 'pointer' }}>
         {list.name && (

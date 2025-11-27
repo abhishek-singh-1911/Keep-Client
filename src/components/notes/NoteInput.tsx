@@ -13,12 +13,6 @@ import {
 } from '@mui/material';
 import {
   CheckBoxOutlined as CheckBoxIcon,
-  PushPinOutlined as PinIcon,
-  PersonAddOutlined as CollaboratorIcon,
-  ArchiveOutlined as ArchiveIcon,
-  DeleteOutline as DeleteIcon,
-  UndoOutlined as UndoIcon,
-  RedoOutlined as RedoIcon,
   Add as AddIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
@@ -121,7 +115,13 @@ export default function NoteInput() {
       // For simplicity in this demo, we'll just add them one by one
       // In a real app, we'd want a bulk add endpoint
       for (const item of itemsToAdd) {
-        await listsService.addItem(createdList.listId, item.text);
+        const updatedList = await listsService.addItem(createdList.listId, item.text);
+        if (item.completed) {
+          const addedItem = updatedList.items[updatedList.items.length - 1];
+          if (addedItem) {
+            await listsService.updateItem(createdList.listId, addedItem.itemId, { completed: true });
+          }
+        }
       }
 
       // 3. Fetch full list to get everything properly
@@ -165,11 +165,6 @@ export default function NoteInput() {
                 onChange={(e) => setTitle(e.target.value)}
                 autoFocus
               />
-              <Tooltip title="Pin note">
-                <IconButton sx={{ mt: 1 }}>
-                  <PinIcon />
-                </IconButton>
-              </Tooltip>
             </Box>
 
             <Box sx={{ px: 2, py: 1 }}>
@@ -178,6 +173,11 @@ export default function NoteInput() {
                   <Checkbox
                     size="small"
                     checked={item.completed}
+                    onChange={() => {
+                      const newItems = [...items];
+                      newItems[index].completed = !newItems[index].completed;
+                      setItems(newItems);
+                    }}
                     sx={{ p: 0.5, mr: 1 }}
                   />
                   <InputBase
@@ -216,34 +216,12 @@ export default function NoteInput() {
 
             <Box sx={{
               display: 'flex',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               alignItems: 'center',
               px: 1,
               py: 1,
               mt: 1
             }}>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="Collaborator">
-                  <ActionButton size="small"><CollaboratorIcon /></ActionButton>
-                </Tooltip>
-                <Tooltip title="Archive">
-                  <ActionButton size="small"><ArchiveIcon /></ActionButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <ActionButton size="small"><DeleteIcon /></ActionButton>
-                </Tooltip>
-                <Tooltip title="Undo">
-                  <span>
-                    <ActionButton size="small" disabled><UndoIcon /></ActionButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Redo">
-                  <span>
-                    <ActionButton size="small" disabled><RedoIcon /></ActionButton>
-                  </span>
-                </Tooltip>
-              </Box>
-
               <Button
                 onClick={handleCollapse}
                 sx={{

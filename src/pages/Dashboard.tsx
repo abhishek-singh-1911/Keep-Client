@@ -1,16 +1,29 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
 import NoteInput from '../components/notes/NoteInput';
 import NoteCard from '../components/notes/NoteCard';
+import EditNoteDialog from '../components/notes/EditNoteDialog';
 import MasonryGrid from '../components/layout/MasonryGrid';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
-import { setLists, setLoading, setError } from '../store/slices/listsSlice';
+import { setLists, setLoading, setError, type List } from '../store/slices/listsSlice';
 import { listsService } from '../services/listsService';
 
 export default function Dashboard() {
   const dispatch = useAppDispatch();
   const { lists, loading } = useAppSelector((state) => state.lists);
+  const [selectedList, setSelectedList] = useState<List | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleNoteClick = (list: List) => {
+    setSelectedList(list);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setSelectedList(null);
+    setIsDialogOpen(false);
+  };
 
   useEffect(() => {
     const fetchLists = async () => {
@@ -63,7 +76,7 @@ export default function Dashboard() {
                         <NoteCard
                           key={list.listId}
                           list={list}
-                          onClick={() => console.log('Clicked note:', list.listId)}
+                          onClick={() => handleNoteClick(list)}
                         />
                       ))}
                     </MasonryGrid>
@@ -80,7 +93,7 @@ export default function Dashboard() {
                         <NoteCard
                           key={list.listId}
                           list={list}
-                          onClick={() => console.log('Clicked note:', list.listId)}
+                          onClick={() => handleNoteClick(list)}
                         />
                       ))}
                     </MasonryGrid>
@@ -90,6 +103,11 @@ export default function Dashboard() {
             )}
           </Box>
         )}
+        <EditNoteDialog
+          open={isDialogOpen}
+          list={selectedList}
+          onClose={handleDialogClose}
+        />
       </Box>
     </MainLayout>
   );

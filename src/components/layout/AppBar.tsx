@@ -118,7 +118,6 @@ export default function AppBar() {
   const toggleView = () => {
     dispatch(setViewMode(viewMode === 'grid' ? 'list' : 'grid'));
   };
-
   return (
     <MuiAppBar
       position="fixed"

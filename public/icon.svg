@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD54F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC107;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect x="0" y="0" width="512" height="512" rx="128" ry="128" fill="url(#grad)" />
+  
+  <!-- Icon Content: Stylized Lightbulb/Note -->
+  <g transform="translate(106, 106) scale(0.58)" filter="url(#shadow)">
+    <!-- Bulb Body -->
+    <path d="M256 0C149.9 0 64 85.9 64 192c0 77.4 27 135 90.2 194.6 9.4 8.8 25.7 25.4 25.7 53.4H332c0-28-16.3-44.6-25.7-53.4C369 327 396 269.4 396 192 396 85.9 310.1 0 256 0z" fill="white"/>
+    <!-- Bulb Base -->
+    <path d="M208 464h96c0 26.5-21.5 48-48 48s-48-21.5-48-48z" fill="white" opacity="0.9"/>
+    <!-- Checkmark inside (subtle) -->
+    <path d="M256 120c-8.8 0-16 7.2-16 16v64h-64c-8.8 0-16 7.2-16 16s7.2 16 16 16h64v64c0 8.8 7.2 16 16 16s16-7.2 16-16v-64h64c8.8 0 16-7.2 16-16s-7.2-16-16-16h-64v-64c0-8.8-7.2-16-16-16z" fill="#FFC107" transform="rotate(45 256 256)"/>
+  </g>
+</svg>
