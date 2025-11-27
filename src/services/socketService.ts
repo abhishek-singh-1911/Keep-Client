@@ -39,3 +39,41 @@ export const subscribeToUpdateList = (cb: (changes: any) => void) => {
 export const sendListUpdate = (listId: string, changes: any) => {
   if (socket) socket.emit('update_list', { listId, ...changes });
 };
+
+// Collaboration events
+export const subscribeToCollaboratorAdded = (cb: (data: { listId: string }) => void) => {
+  if (!socket) return;
+  socket.on('collaborator_added', (data) => {
+    console.log('Collaborator added event received:', data);
+    cb(data);
+  });
+};
+
+export const subscribeToCollaboratorRemoved = (cb: (data: { listId: string }) => void) => {
+  if (!socket) return;
+  socket.on('collaborator_removed', (data) => {
+    console.log('Collaborator removed event received:', data);
+    cb(data);
+  });
+};
+
+export const subscribeToPermissionChanged = (cb: (data: { listId: string }) => void) => {
+  if (!socket) return;
+  socket.on('permission_changed', (data) => {
+    console.log('Permission changed event received:', data);
+    cb(data);
+  });
+};
+
+export const sendCollaboratorAdded = (listId: string, userId: string) => {
+  if (socket) socket.emit('collaborator_added', { listId, userId });
+};
+
+export const sendCollaboratorRemoved = (listId: string, userId: string) => {
+  if (socket) socket.emit('collaborator_removed', { listId, userId });
+};
+
+export const sendPermissionChanged = (listId: string, userId: string, permission: string) => {
+  if (socket) socket.emit('permission_changed', { listId, userId, permission });
+};
+

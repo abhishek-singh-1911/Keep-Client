@@ -38,6 +38,22 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
   const mockOnClick = vi.fn();
 
+  const mockUser = {
+    _id: 'user1',
+    name: 'Test User',
+    email: 'test@example.com',
+  };
+
+  const preloadedState = {
+    auth: {
+      user: mockUser,
+      isAuthenticated: true,
+      token: 'mock-token',
+      loading: false,
+      error: null,
+    },
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockConfirm.mockReturnValue(true); // Default to confirming delete
@@ -45,14 +61,14 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
   describe('Pin Functionality', () => {
     it('should display pin button on hover', async () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const card = screen.getByText('Test List').closest('.MuiCard-root');
       expect(card).toBeInTheDocument();
     });
 
     it('should show outlined pin icon when list is not pinned', () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       // The pin button should exist
       const buttons = screen.getAllByRole('button');
@@ -61,7 +77,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
     it('should show filled pin icon when list is pinned', () => {
       const pinnedList = { ...mockList, pinned: true };
-      renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />, { preloadedState });
 
       const buttons = screen.getAllByRole('button');
       expect(buttons.length).toBeGreaterThan(0);
@@ -72,7 +88,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const updatedList = { ...mockList, pinned: true };
       vi.mocked(listsService.pinList).mockResolvedValue(updatedList);
 
-      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       // Find the pin button by class
       const pinButton = container.querySelector('.pin-button') as HTMLElement;
@@ -90,7 +106,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const unpinnedList = { ...mockList, pinned: false };
       vi.mocked(listsService.pinList).mockResolvedValue(unpinnedList);
 
-      const { container } = renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />);
+      const { container } = renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />, { preloadedState });
 
       const pinButton = container.querySelector('.pin-button') as HTMLElement;
       await user.click(pinButton);
@@ -104,7 +120,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const user = userEvent.setup();
       vi.mocked(listsService.pinList).mockResolvedValue({ ...mockList, pinned: true });
 
-      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const pinButton = container.querySelector('.pin-button') as HTMLElement;
       await user.click(pinButton);
@@ -117,7 +133,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       vi.mocked(listsService.pinList).mockRejectedValue(new Error('Network error'));
 
-      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      const { container } = renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const pinButton = container.querySelector('.pin-button') as HTMLElement;
       await user.click(pinButton);
@@ -132,7 +148,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
   describe('Archive Functionality', () => {
     it('should display "Archive" tooltip when list is not archived', () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const archiveButton = screen.getByLabelText(/archive/i);
       expect(archiveButton).toBeInTheDocument();
@@ -140,7 +156,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
     it('should display "Unarchive" tooltip when list is archived', () => {
       const archivedList = { ...mockList, archived: true };
-      renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />, { preloadedState });
 
       const unarchiveButton = screen.getByLabelText(/unarchive/i);
       expect(unarchiveButton).toBeInTheDocument();
@@ -151,7 +167,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const archivedList = { ...mockList, archived: true };
       vi.mocked(listsService.archiveList).mockResolvedValue(archivedList);
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const archiveButton = screen.getByLabelText(/archive/i);
       await user.click(archiveButton);
@@ -167,7 +183,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const unarchivedList = { ...mockList, archived: false };
       vi.mocked(listsService.archiveList).mockResolvedValue(unarchivedList);
 
-      renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />, { preloadedState });
 
       const unarchiveButton = screen.getByLabelText(/unarchive/i);
       await user.click(unarchiveButton);
@@ -181,7 +197,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const user = userEvent.setup();
       vi.mocked(listsService.archiveList).mockResolvedValue({ ...mockList, archived: true });
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const archiveButton = screen.getByLabelText(/archive/i);
       await user.click(archiveButton);
@@ -194,7 +210,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       vi.mocked(listsService.archiveList).mockRejectedValue(new Error('Network error'));
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const archiveButton = screen.getByLabelText(/archive/i);
       await user.click(archiveButton);
@@ -209,7 +225,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
   describe('Delete Functionality', () => {
     it('should display delete button', () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       expect(deleteButton).toBeInTheDocument();
@@ -217,7 +233,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
 
     it('should show confirmation dialog when delete button is clicked', async () => {
       const user = userEvent.setup();
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -230,7 +246,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       mockConfirm.mockReturnValue(true);
       vi.mocked(listsService.deleteList).mockResolvedValue();
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -244,7 +260,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const user = userEvent.setup();
       mockConfirm.mockReturnValue(false);
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -257,7 +273,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       mockConfirm.mockReturnValue(true);
       vi.mocked(listsService.deleteList).mockResolvedValue();
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -271,7 +287,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       mockConfirm.mockReturnValue(true);
       vi.mocked(listsService.deleteList).mockRejectedValue(new Error('Network error'));
 
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -291,7 +307,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const pinnedArchivedList = { ...mockList, archived: true, pinned: true };
       vi.mocked(listsService.pinList).mockResolvedValue(pinnedArchivedList);
 
-      const { container } = renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />);
+      const { container } = renderWithProviders(<NoteCard list={archivedList} onClick={mockOnClick} />, { preloadedState });
 
       const pinButton = container.querySelector('.pin-button') as HTMLElement;
       await user.click(pinButton);
@@ -307,7 +323,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       const archivedPinnedList = { ...mockList, archived: true, pinned: true };
       vi.mocked(listsService.archiveList).mockResolvedValue(archivedPinnedList);
 
-      renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={pinnedList} onClick={mockOnClick} />, { preloadedState });
 
       const archiveButton = screen.getByLabelText(/archive/i);
       await user.click(archiveButton);
@@ -323,7 +339,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
       mockConfirm.mockReturnValue(true);
       vi.mocked(listsService.deleteList).mockResolvedValue();
 
-      renderWithProviders(<NoteCard list={pinnedArchivedList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={pinnedArchivedList} onClick={mockOnClick} />, { preloadedState });
 
       const deleteButton = screen.getByLabelText(/delete/i);
       await user.click(deleteButton);
@@ -337,7 +353,7 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
   describe('Card Click Behavior', () => {
     it('should trigger onClick when clicking the card content', async () => {
       const user = userEvent.setup();
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const cardContent = screen.getByText('Test List');
       await user.click(cardContent);
@@ -346,14 +362,14 @@ describe('NoteCard - Delete, Archive, Pin Functionality', () => {
     });
 
     it('should display list items correctly', () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       expect(screen.getByText('Item 1')).toBeInTheDocument();
       expect(screen.getByText('Item 2')).toBeInTheDocument();
     });
 
     it('should show completed items with line-through', () => {
-      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />);
+      renderWithProviders(<NoteCard list={mockList} onClick={mockOnClick} />, { preloadedState });
 
       const item2 = screen.getByText('Item 2');
       expect(item2).toHaveStyle({ textDecoration: 'line-through' });

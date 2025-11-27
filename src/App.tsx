@@ -14,6 +14,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import ListView from './pages/ListView';
 import Archive from './pages/Archive';
+import Collaborated from './pages/Collaborated';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -93,6 +94,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Archive />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collaborated"
+        element={
+          <ProtectedRoute>
+            <Collaborated />
           </ProtectedRoute>
         }
       />

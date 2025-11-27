@@ -11,6 +11,7 @@ import {
 import {
   LightbulbOutlined as NotesIcon,
   ArchiveOutlined as ArchiveIcon,
+  PeopleOutlined as CollaboratedIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/useRedux';
@@ -93,6 +94,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { text: 'Notes', icon: <NotesIcon />, path: '/dashboard' },
+    { text: 'Collaborated', icon: <CollaboratedIcon />, path: '/collaborated' },
     { text: 'Archive', icon: <ArchiveIcon />, path: '/archive' },
   ];
 

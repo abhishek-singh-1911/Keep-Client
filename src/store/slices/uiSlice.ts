@@ -5,12 +5,14 @@ interface UIState {
   sidebarOpen: boolean;
   searchQuery: string;
   viewMode: 'grid' | 'list';
+  activeView: 'notes' | 'archived' | 'collaborated';
 }
 
 const initialState: UIState = {
   sidebarOpen: true,
   searchQuery: '',
   viewMode: 'grid',
+  activeView: 'notes',
 };
 
 const uiSlice = createSlice({
@@ -29,8 +31,11 @@ const uiSlice = createSlice({
     setViewMode: (state, action: PayloadAction<'grid' | 'list'>) => {
       state.viewMode = action.payload;
     },
+    setActiveView: (state, action: PayloadAction<'notes' | 'archived' | 'collaborated'>) => {
+      state.activeView = action.payload;
+    },
   },
 });
 
-export const { toggleSidebar, setSidebarOpen, setSearchQuery, setViewMode } = uiSlice.actions;
+export const { toggleSidebar, setSidebarOpen, setSearchQuery, setViewMode, setActiveView } = uiSlice.actions;
 export default uiSlice.reducer;

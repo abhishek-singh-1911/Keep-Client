@@ -1,3 +1,4 @@
+import React from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Card,
@@ -16,9 +17,10 @@ import {
   PersonAddOutlined as CollaboratorIcon,
 } from '@mui/icons-material';
 import type { List } from '../../store/slices/listsSlice';
-import { useAppDispatch } from '../../hooks/useRedux';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { updateList, deleteList as removeList } from '../../store/slices/listsSlice';
 import { listsService } from '../../services/listsService';
+import CollaboratorDialog from './CollaboratorDialog';
 
 interface NoteCardProps {
   list: List;
@@ -67,6 +69,10 @@ const NoteContent = styled(Box)(() => ({
 
 export default function NoteCard({ list, onClick }: NoteCardProps) {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const [collaboratorDialogOpen, setCollaboratorDialogOpen] = React.useState(false);
+
+  const isOwner = currentUser?._id === list.owner;
 
   // Take only first 8 items for preview
   const previewItems = list.items.slice(0, 8);
@@ -74,6 +80,7 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
 
   const handlePin = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isOwner) return; // Only owner can pin
     try {
       const updatedList = await listsService.pinList(list.listId, !list.pinned);
       dispatch(updateList(updatedList));
@@ -84,6 +91,7 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
 
   const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isOwner) return; // Only owner can archive
     try {
       const updatedList = await listsService.archiveList(list.listId, !list.archived);
       dispatch(updateList(updatedList));
@@ -94,6 +102,7 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isOwner) return; // Only owner can delete
     if (window.confirm('Are you sure you want to delete this list?')) {
       try {
         await listsService.deleteList(list.listId);
@@ -104,77 +113,94 @@ export default function NoteCard({ list, onClick }: NoteCardProps) {
     }
   };
 
-  return (
-    <StyledCard onClick={onClick}>
-      {!list.archived && (
-        <PinButton
-          className="pin-button"
-          size="small"
-          onClick={handlePin}
-          ispinned={list.pinned ? 'true' : 'false'}
-        >
-          {list.pinned ? <PinFilledIcon /> : <PinIcon />}
-        </PinButton>
-      )}
+  const handleCollaboratorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCollaboratorDialogOpen(true);
+  };
 
-      <CardContent sx={{ pb: 0, pt: 2, px: 2, cursor: 'pointer' }}>
-        {list.name && (
-          <Typography variant="h6" sx={{ mb: 1, fontWeight: 500, fontSize: '1rem' }}>
-            {list.name}
-          </Typography>
+  return (
+    <>
+      <StyledCard onClick={onClick}>
+        {isOwner && (
+          <PinButton
+            className="pin-button"
+            size="small"
+            onClick={handlePin}
+            ispinned={list.pinned ? 'true' : 'false'}
+          >
+            {list.pinned ? <PinFilledIcon /> : <PinIcon />}
+          </PinButton>
         )}
 
-        <NoteContent>
-          {previewItems.map((item) => (
-            <Box key={item.itemId} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-              <Checkbox
-                checked={item.completed}
-                size="small"
-                sx={{ p: 0.5, mr: 1 }}
-                disabled
-              />
-              <Typography
-                variant="body2"
-                sx={{
-                  textDecoration: item.completed ? 'line-through' : 'none',
-                  color: item.completed ? 'text.secondary' : 'text.primary',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {item.text}
-              </Typography>
-            </Box>
-          ))}
-
-          {remainingCount > 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, ml: 4 }}>
-              + {remainingCount} more items
+        <CardContent sx={{ pb: 0, pt: 2, px: 2, cursor: 'pointer' }}>
+          {list.name && (
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 500, fontSize: '1rem' }}>
+              {list.name}
             </Typography>
           )}
-        </NoteContent>
-      </CardContent>
 
-      <NoteActions className="note-actions">
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Collaborator">
-            <IconButton size="small">
-              <CollaboratorIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={list.archived ? "Unarchive" : "Archive"}>
-            <IconButton size="small" onClick={handleArchive}>
-              <ArchiveIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton size="small" onClick={handleDelete}>
-              <DeleteIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </NoteActions>
-    </StyledCard>
+          <NoteContent>
+            {previewItems.map((item) => (
+              <Box key={item.itemId} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                <Checkbox
+                  checked={item.completed}
+                  size="small"
+                  sx={{ p: 0.5, mr: 1 }}
+                  disabled
+                />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    textDecoration: item.completed ? 'line-through' : 'none',
+                    color: item.completed ? 'text.secondary' : 'text.primary',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.text}
+                </Typography>
+              </Box>
+            ))}
+
+            {remainingCount > 0 && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, ml: 4 }}>
+                + {remainingCount} more items
+              </Typography>
+            )}
+          </NoteContent>
+        </CardContent>
+
+        <NoteActions className="note-actions">
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title="Collaborator">
+              <IconButton size="small" onClick={handleCollaboratorClick}>
+                <CollaboratorIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            {isOwner && (
+              <>
+                <Tooltip title={list.archived ? "Unarchive" : "Archive"}>
+                  <IconButton size="small" onClick={handleArchive}>
+                    <ArchiveIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete">
+                  <IconButton size="small" onClick={handleDelete}>
+                    <DeleteIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+          </Box>
+        </NoteActions>
+      </StyledCard>
+
+      <CollaboratorDialog
+        open={collaboratorDialogOpen}
+        onClose={() => setCollaboratorDialogOpen(false)}
+        list={list}
+      />
+    </>
   );
 }

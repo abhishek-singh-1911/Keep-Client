@@ -42,6 +42,11 @@ export const listsService = {
     return response.data;
   },
 
+  async updateCollaboratorPermission(listId: string, email: string, permission: 'view' | 'edit'): Promise<List> {
+    const response = await api.put<List>(`/lists/${listId}/collaborators`, { email, permission });
+    return response.data;
+  },
+
   async addItem(listId: string, text: string): Promise<List> {
     const response = await api.post<List>(`/lists/${listId}/items`, { text });
     return response.data;

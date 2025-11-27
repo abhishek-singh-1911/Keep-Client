@@ -13,7 +13,14 @@ export interface List {
   listId: string;
   name: string;
   owner: string;
-  collaborators: string[];
+  collaborators: {
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+    permission: 'view' | 'edit';
+  }[];
   items: ListItem[];
   archived: boolean;
   pinned: boolean;
