@@ -10,7 +10,7 @@ import uiReducer from './slices/uiSlice';
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth'], // Only persist auth state
+  whitelist: ['auth', 'ui'], // Persist auth and ui state
 };
 
 // Combine reducers

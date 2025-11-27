@@ -75,4 +75,9 @@ export const listsService = {
     const response = await api.put<List>(`/lists/${listId}/pin`, { pinned });
     return response.data;
   },
+
+  async reorderLists(listIds: string[]): Promise<List[]> {
+    const response = await api.put<List[]>('/lists/reorder', { listIds });
+    return response.data;
+  },
 };

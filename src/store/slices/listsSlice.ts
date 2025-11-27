@@ -17,6 +17,7 @@ export interface List {
   items: ListItem[];
   archived: boolean;
   pinned: boolean;
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }

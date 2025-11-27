@@ -13,10 +13,26 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import type { List, ListItem } from '../../store/slices/listsSlice';
 import { useAppDispatch } from '../../hooks/useRedux';
 import { updateList } from '../../store/slices/listsSlice';
 import { listsService } from '../../services/listsService';
+import { SortableItem } from './SortableItem';
 
 const TitleInput = styled(InputBase)(() => ({
   width: '100%',
@@ -48,6 +64,17 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   const [title, setTitle] = useState('');
   const [items, setItems] = useState<ListItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Require 5px movement before activating
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (list) {
@@ -82,6 +109,29 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
     }
 
     onClose();
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      if (!list) return;
+
+      const oldIndex = items.findIndex((item) => item.itemId === active.id);
+      const newIndex = items.findIndex((item) => item.itemId === over.id);
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+
+      try {
+        const itemIds = newItems.map(item => item.itemId);
+        const updatedList = await listsService.reorderItems(list.listId, itemIds);
+        dispatch(updateList(updatedList));
+      } catch (error) {
+        console.error('Failed to reorder items:', error);
+        setItems(items); // Revert on failure
+      }
+    }
   };
 
   const handleToggleItem = async (itemId: string, completed: boolean) => {
@@ -185,35 +235,46 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
         </Box>
 
         <Box sx={{ px: 2, pb: 2 }}>
-          {items.map((item) => (
-            <Box key={item.itemId} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Checkbox
-                size="small"
-                checked={item.completed}
-                onChange={() => handleToggleItem(item.itemId, item.completed)}
-                sx={{ p: 0.5, mr: 1 }}
-              />
-              <InputBase
-                value={item.text}
-                fullWidth
-                sx={{
-                  fontSize: '0.875rem',
-                  textDecoration: item.completed ? 'line-through' : 'none',
-                  color: item.completed ? 'text.secondary' : 'text.primary',
-                }}
-                onChange={(e) => handleUpdateItemText(item.itemId, e.target.value)}
-                onBlur={(e) => handleBlurItemText(item.itemId, e.target.value)}
-              />
-              <IconButton
-                size="small"
-                onClick={() => handleDeleteItem(item.itemId)}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={items.map(item => item.itemId)}
+              strategy={verticalListSortingStrategy}
+            >
+              {items.map((item) => (
+                <SortableItem key={item.itemId} id={item.itemId}>
+                  <Checkbox
+                    size="small"
+                    checked={item.completed}
+                    onChange={() => handleToggleItem(item.itemId, item.completed)}
+                    sx={{ p: 0.5, mr: 1 }}
+                  />
+                  <InputBase
+                    value={item.text}
+                    fullWidth
+                    sx={{
+                      fontSize: '0.875rem',
+                      textDecoration: item.completed ? 'line-through' : 'none',
+                      color: item.completed ? 'text.secondary' : 'text.primary',
+                    }}
+                    onChange={(e) => handleUpdateItemText(item.itemId, e.target.value)}
+                    onBlur={(e) => handleBlurItemText(item.itemId, e.target.value)}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteItem(item.itemId)}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </SortableItem>
+              ))}
+            </SortableContext>
+          </DndContext>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, pl: 4 }}>
             <AddIcon sx={{ color: 'text.secondary', mr: 2, fontSize: 20 }} />
             <ItemInput
               placeholder="List item"
