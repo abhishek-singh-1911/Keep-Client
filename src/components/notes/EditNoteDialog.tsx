@@ -32,6 +32,7 @@ import type { List, ListItem } from '../../store/slices/listsSlice';
 import { useAppDispatch } from '../../hooks/useRedux';
 import { updateList } from '../../store/slices/listsSlice';
 import { listsService } from '../../services/listsService';
+import { sendListUpdate, joinListRoom, leaveListRoom, subscribeToUpdateList } from '../../services/socketService';
 import { SortableItem } from './SortableItem';
 
 const TitleInput = styled(InputBase)(() => ({
@@ -80,8 +81,46 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
     if (list) {
       setTitle(list.name);
       setItems(list.items);
+      // Join the socket room for this list to receive real-time updates
+      joinListRoom(list.listId);
     }
+
+    // Leave the room when dialog closes or list changes
+    return () => {
+      if (list) {
+        leaveListRoom(list.listId);
+      }
+    };
   }, [list]);
+
+  // Subscribe to real-time updates for this list
+  useEffect(() => {
+    if (!list) return;
+
+    // Listen for updates from other users
+    subscribeToUpdateList(async (changes) => {
+      // Only update if this is the current list being edited
+      if (!list) return;
+
+      // Refetch the latest list data to get accurate state
+      try {
+        const updatedList = await listsService.getList(list.listId);
+
+        // Update local state with latest data
+        if (changes.name !== undefined) {
+          setTitle(updatedList.name);
+        }
+        if (changes.items !== undefined) {
+          setItems(updatedList.items);
+        }
+
+        // Also update Redux store
+        dispatch(updateList(updatedList));
+      } catch (error) {
+        console.error('Failed to fetch updated list:', error);
+      }
+    });
+  }, [list, dispatch]);
 
   const handleClose = async () => {
     if (!list) return;
@@ -92,6 +131,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
       try {
         const updatedList = await listsService.updateListName(list.listId, title);
         dispatch(updateList(updatedList));
+        // Emit socket event for real-time update
+        sendListUpdate(list.listId, { name: title });
       } catch (error) {
         console.error('Failed to update list name:', error);
       }
@@ -102,6 +143,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
       try {
         const updatedList = await listsService.addItem(list.listId, newItemText);
         dispatch(updateList(updatedList));
+        // Emit socket event for real-time update
+        sendListUpdate(list.listId, { items: updatedList.items });
         setNewItemText('');
       } catch (error) {
         console.error('Failed to add item:', error);
@@ -127,6 +170,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
         const itemIds = newItems.map(item => item.itemId);
         const updatedList = await listsService.reorderItems(list.listId, itemIds);
         dispatch(updateList(updatedList));
+        // Emit socket event for real-time update
+        sendListUpdate(list.listId, { items: updatedList.items });
       } catch (error) {
         console.error('Failed to reorder items:', error);
         setItems(items); // Revert on failure
@@ -146,6 +191,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
     try {
       const updatedList = await listsService.updateItem(list.listId, itemId, { completed: !completed });
       dispatch(updateList(updatedList));
+      // Emit socket event for real-time update
+      sendListUpdate(list.listId, { items: updatedList.items });
     } catch (error) {
       console.error('Failed to update item:', error);
       // Revert on failure
@@ -171,6 +218,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
       try {
         const updatedList = await listsService.updateItem(list.listId, itemId, { text });
         dispatch(updateList(updatedList));
+        // Emit socket event for real-time update
+        sendListUpdate(list.listId, { items: updatedList.items });
       } catch (error) {
         console.error('Failed to update item text:', error);
       }
@@ -187,6 +236,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
     try {
       const updatedList = await listsService.deleteItem(list.listId, itemId);
       dispatch(updateList(updatedList));
+      // Emit socket event for real-time update
+      sendListUpdate(list.listId, { items: updatedList.items });
     } catch (error) {
       console.error('Failed to delete item:', error);
       setItems(items);
@@ -200,6 +251,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
       const updatedList = await listsService.addItem(list.listId, newItemText);
       dispatch(updateList(updatedList));
       setItems(updatedList.items);
+      // Emit socket event for real-time update
+      sendListUpdate(list.listId, { items: updatedList.items });
       setNewItemText('');
     } catch (error) {
       console.error('Failed to add item:', error);

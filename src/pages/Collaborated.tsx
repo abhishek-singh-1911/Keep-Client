@@ -10,6 +10,7 @@ import {
   subscribeToCollaboratorAdded,
   subscribeToCollaboratorRemoved,
   subscribeToPermissionChanged,
+  subscribeToUpdateList,
 } from '../services/socketService';
 
 export default function Collaborated() {
@@ -52,6 +53,12 @@ export default function Collaborated() {
 
     subscribeToPermissionChanged((data) => {
       console.log('Permission changed, refetching lists...', data);
+      fetchLists();
+    });
+
+    // Subscribe to list content updates for real-time editing
+    subscribeToUpdateList((changes) => {
+      console.log('List updated, refetching lists...', changes);
       fetchLists();
     });
   }, [fetchLists]);
