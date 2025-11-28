@@ -175,6 +175,13 @@ Real-time Update on Other Clients
 - Changes appear instantly for all collaborators
 - Socket.IO handles real-time sync
 - Automatic refetch on collaboration events
+- **Live Editing**: Updates to title, items, and checkboxes sync instantly in open dialogs
+
+**Collaborator Permissions**:
+- **View**: Read-only access (cannot edit title, items, or checkboxes)
+- **Edit**: Full editing capabilities
+- **Owner**: Full control + manage collaborators
+- **Archive Behavior**: Archiving a note automatically removes all collaborators (note becomes private)
 
 ### 3. Organization
 
@@ -442,6 +449,8 @@ const filterLists = (listArray: List[]) => {
 
 **Test Files**:
 - `realtime-collaboration.test.tsx` - 16 tests for real-time features
+- `edit-dialog-realtime.test.tsx` - 11 tests for real-time editing in dialog
+- `edit-dialog-permissions.test.tsx` - 8 tests for collaborator permissions
 - `CollaboratorDialog.test.tsx` - Component tests
 - `NoteCard.test.tsx` - Component tests
 - `test-utils.tsx` - Testing utilities

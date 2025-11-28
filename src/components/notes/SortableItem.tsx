@@ -6,9 +6,10 @@ import { DragIndicator as DragHandleIcon } from '@mui/icons-material';
 interface SortableItemProps {
   id: string;
   children: React.ReactNode;
+  disabled?: boolean;
 }
 
-export function SortableItem({ id, children }: SortableItemProps) {
+export function SortableItem({ id, children, disabled }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -16,7 +17,7 @@ export function SortableItem({ id, children }: SortableItemProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -29,19 +30,21 @@ export function SortableItem({ id, children }: SortableItemProps) {
 
   return (
     <Box ref={setNodeRef} style={style}>
-      <IconButton
-        size="small"
-        sx={{
-          cursor: isDragging ? 'grabbing' : 'grab',
-          p: 0.5,
-          mr: 0.5,
-          touchAction: 'none',
-        }}
-        {...attributes}
-        {...listeners}
-      >
-        <DragHandleIcon fontSize="small" sx={{ color: 'text.disabled' }} />
-      </IconButton>
+      {!disabled && (
+        <IconButton
+          size="small"
+          sx={{
+            cursor: isDragging ? 'grabbing' : 'grab',
+            p: 0.5,
+            mr: 0.5,
+            touchAction: 'none',
+          }}
+          {...attributes}
+          {...listeners}
+        >
+          <DragHandleIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+        </IconButton>
+      )}
       <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
         {children}
       </Box>

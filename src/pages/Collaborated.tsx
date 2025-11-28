@@ -1,10 +1,11 @@
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
 import NoteCard from '../components/notes/NoteCard';
+import EditNoteDialog from '../components/notes/EditNoteDialog';
 import MasonryGrid from '../components/layout/MasonryGrid';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
-import { setLists, setLoading, setError } from '../store/slices/listsSlice';
+import { setLists, setLoading, setError, type List } from '../store/slices/listsSlice';
 import { listsService } from '../services/listsService';
 import {
   subscribeToCollaboratorAdded,
@@ -17,6 +18,18 @@ export default function Collaborated() {
   const dispatch = useAppDispatch();
   const { lists, loading } = useAppSelector((state) => state.lists);
   const currentUser = useAppSelector((state) => state.auth.user);
+  const [selectedList, setSelectedList] = useState<List | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleNoteClick = (list: List) => {
+    setSelectedList(list);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setSelectedList(null);
+    setIsDialogOpen(false);
+  };
 
   // Memoize the fetchLists function so it can be used in multiple places
   const fetchLists = useCallback(async () => {
@@ -120,7 +133,7 @@ export default function Collaborated() {
                     <NoteCard
                       key={list.listId}
                       list={list}
-                      onClick={() => console.log('Clicked note:', list.listId)}
+                      onClick={() => handleNoteClick(list)}
                     />
                   ))}
                 </MasonryGrid>
@@ -128,6 +141,11 @@ export default function Collaborated() {
             )}
           </Box>
         )}
+        <EditNoteDialog
+          open={isDialogOpen}
+          list={selectedList}
+          onClose={handleDialogClose}
+        />
       </Box>
     </MainLayout>
   );

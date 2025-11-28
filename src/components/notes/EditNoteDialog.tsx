@@ -29,7 +29,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import type { List, ListItem } from '../../store/slices/listsSlice';
-import { useAppDispatch } from '../../hooks/useRedux';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { updateList } from '../../store/slices/listsSlice';
 import { listsService } from '../../services/listsService';
 import { sendListUpdate, joinListRoom, leaveListRoom, subscribeToUpdateList } from '../../services/socketService';
@@ -62,9 +62,16 @@ interface EditNoteDialogProps {
 
 export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogProps) {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const [title, setTitle] = useState('');
   const [items, setItems] = useState<ListItem[]>([]);
   const [newItemText, setNewItemText] = useState('');
+
+  // Determine if the current user has edit permissions
+  const canEdit = list ? (
+    list.owner === currentUser?._id ||
+    list.collaborators.some(c => c.userId._id === currentUser?._id && c.permission === 'edit')
+  ) : false;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -125,29 +132,32 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   const handleClose = async () => {
     if (!list) return;
 
-    // Save changes on close
-    // 1. Update title if changed
-    if (title !== list.name) {
-      try {
-        const updatedList = await listsService.updateListName(list.listId, title);
-        dispatch(updateList(updatedList));
-        // Emit socket event for real-time update
-        sendListUpdate(list.listId, { name: title });
-      } catch (error) {
-        console.error('Failed to update list name:', error);
+    // Only save changes if user has edit permission
+    if (canEdit) {
+      // Save changes on close
+      // 1. Update title if changed
+      if (title !== list.name) {
+        try {
+          const updatedList = await listsService.updateListName(list.listId, title);
+          dispatch(updateList(updatedList));
+          // Emit socket event for real-time update
+          sendListUpdate(list.listId, { name: title });
+        } catch (error) {
+          console.error('Failed to update list name:', error);
+        }
       }
-    }
 
-    // 2. Add new item if text exists
-    if (newItemText.trim()) {
-      try {
-        const updatedList = await listsService.addItem(list.listId, newItemText);
-        dispatch(updateList(updatedList));
-        // Emit socket event for real-time update
-        sendListUpdate(list.listId, { items: updatedList.items });
-        setNewItemText('');
-      } catch (error) {
-        console.error('Failed to add item:', error);
+      // 2. Add new item if text exists
+      if (newItemText.trim()) {
+        try {
+          const updatedList = await listsService.addItem(list.listId, newItemText);
+          dispatch(updateList(updatedList));
+          // Emit socket event for real-time update
+          sendListUpdate(list.listId, { items: updatedList.items });
+          setNewItemText('');
+        } catch (error) {
+          console.error('Failed to add item:', error);
+        }
       }
     }
 
@@ -155,6 +165,8 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (!canEdit) return; // Prevent reordering if no edit permission
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -180,7 +192,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleToggleItem = async (itemId: string, completed: boolean) => {
-    if (!list) return;
+    if (!list || !canEdit) return; // Prevent toggling if no edit permission
 
     // Optimistic update
     const updatedItems = items.map(item =>
@@ -201,7 +213,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleUpdateItemText = async (itemId: string, text: string) => {
-    if (!list) return;
+    if (!list || !canEdit) return;
 
     const updatedItems = items.map(item =>
       item.itemId === itemId ? { ...item, text } : item
@@ -210,7 +222,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleBlurItemText = async (itemId: string, text: string) => {
-    if (!list) return;
+    if (!list || !canEdit) return;
 
     // Only update if text changed from original
     const originalItem = list.items.find(i => i.itemId === itemId);
@@ -227,7 +239,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!list) return;
+    if (!list || !canEdit) return;
 
     // Optimistic update
     const updatedItems = items.filter(item => item.itemId !== itemId);
@@ -245,7 +257,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
   };
 
   const handleAddItem = async () => {
-    if (!list || !newItemText.trim()) return;
+    if (!list || !newItemText.trim() || !canEdit) return;
 
     try {
       const updatedList = await listsService.addItem(list.listId, newItemText);
@@ -284,6 +296,7 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            readOnly={!canEdit}
           />
         </Box>
 
@@ -296,13 +309,15 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
             <SortableContext
               items={items.map(item => item.itemId)}
               strategy={verticalListSortingStrategy}
+              disabled={!canEdit}
             >
               {items.map((item) => (
-                <SortableItem key={item.itemId} id={item.itemId}>
+                <SortableItem key={item.itemId} id={item.itemId} disabled={!canEdit}>
                   <Checkbox
                     size="small"
                     checked={item.completed}
                     onChange={() => handleToggleItem(item.itemId, item.completed)}
+                    disabled={!canEdit}
                     sx={{ p: 0.5, mr: 1 }}
                   />
                   <InputBase
@@ -315,28 +330,33 @@ export default function EditNoteDialog({ open, list, onClose }: EditNoteDialogPr
                     }}
                     onChange={(e) => handleUpdateItemText(item.itemId, e.target.value)}
                     onBlur={(e) => handleBlurItemText(item.itemId, e.target.value)}
+                    readOnly={!canEdit}
                   />
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDeleteItem(item.itemId)}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                  {canEdit && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteItem(item.itemId)}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  )}
                 </SortableItem>
               ))}
             </SortableContext>
           </DndContext>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, pl: 4 }}>
-            <AddIcon sx={{ color: 'text.secondary', mr: 2, fontSize: 20 }} />
-            <ItemInput
-              placeholder="List item"
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handleAddItem}
-            />
-          </Box>
+          {canEdit && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, pl: 4 }}>
+              <AddIcon sx={{ color: 'text.secondary', mr: 2, fontSize: 20 }} />
+              <ItemInput
+                placeholder="List item"
+                value={newItemText}
+                onChange={(e) => setNewItemText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handleAddItem}
+              />
+            </Box>
+          )}
         </Box>
 
         <Box sx={{
