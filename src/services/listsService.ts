@@ -7,13 +7,7 @@ export const listsService = {
     return response.data;
   },
 
-  // Note: The backend currently doesn't have a specific "get all lists" endpoint
-  // that returns an array. It only has getList(id).
-  // We might need to implement this in the backend first.
-  // For now, we'll assume the backend will be updated to support GET /lists
-  // or we might need to fetch lists individually if we had their IDs (which we don't).
   async getAllLists(): Promise<List[]> {
-    // This endpoint needs to be implemented in the backend
     const response = await api.get<List[]>('/lists');
     return response.data;
   },
